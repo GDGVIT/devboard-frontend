@@ -19,8 +19,8 @@ export default function Home() {
         const refreshToken = searchParams.get("refresh_token")
         const error = searchParams.get("error")
 
-        console.log("🏠 HOME PAGE - Checking for auth tokens...")
-        console.log("🎫 URL Tokens:", {
+        console.log("HOME PAGE - Checking for auth tokens...")
+        console.log("URL Tokens:", {
           hasAccessToken: !!accessToken,
           hasRefreshToken: !!refreshToken,
           error,
@@ -28,32 +28,32 @@ export default function Home() {
         })
 
         if (error) {
-          console.error("❌ Auth error in URL:", error)
+          console.error("Auth error in URL:", error)
           toast.error("Authentication failed: " + decodeURIComponent(error))
           return
         }
 
         if (accessToken && refreshToken && !isAuthenticated) {
-          console.log("🔐 Found tokens in URL, processing login...")
+          console.log("Found tokens in URL, processing login...")
           setIsProcessingAuth(true)
 
           try {
             await login(accessToken, refreshToken)
-            console.log("✅ Login successful from URL tokens")
+            console.log("Login successful from URL tokens")
             toast.success("Successfully logged in!")
 
             // Clean up URL by removing the tokens
             const cleanUrl = window.location.pathname
             window.history.replaceState({}, document.title, cleanUrl)
           } catch (error) {
-            console.error("❌ Login failed:", error)
+            console.error("Login failed:", error)
             toast.error("Login failed: " + (error instanceof Error ? error.message : "Unknown error"))
           } finally {
             setIsProcessingAuth(false)
           }
         }
       } catch (error) {
-        console.error("❌ Error handling auth tokens:", error)
+        console.error("Error handling auth tokens:", error)
         setIsProcessingAuth(false)
       }
     }
@@ -76,7 +76,6 @@ export default function Home() {
   return (
     <>
       <HeroSection />
-      {/* Main content will be added here */}
     </>
   )
 }

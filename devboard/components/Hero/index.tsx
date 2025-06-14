@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { Poppins } from "next/font/google"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Loader2 } from "lucide-react"
 
 // Initialize the Poppins font
 const poppins = Poppins({
@@ -88,10 +88,7 @@ export default function HeroSection() {
       {/* Background canvas for floating shapes */}
       <canvas ref={canvasRef} className="absolute inset-0 z-0" style={{ filter: "blur(80px)" }} />
 
-      {/* Logo */}
-      <div className="absolute top-8 left-8 z-10">
-        <h1 className="text-white text-2xl font-bold">DevBoard</h1>
-      </div>
+  
 
       {/* Hero content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
@@ -107,12 +104,42 @@ export default function HeroSection() {
           ipsum.lorem ipsum. lorem ipsum.
         </p>
 
-        <button className="group relative bg-[#3F1469] text-white px-8 py-3 rounded-full flex items-center gap-2 overflow-hidden transition-all duration-300 hover:shadow-[0_0_20px_rgba(211,168,255,0.5)] hover:bg-[#4a1a7d] cursor-pointer">
+        {/* <button className="group relative bg-[#3F1469] text-white px-8 py-3 rounded-full flex items-center gap-2 overflow-hidden transition-all duration-300 hover:shadow-[0_0_20px_rgba(211,168,255,0.5)] hover:bg-[#4a1a7d] cursor-pointer">
           <span className="relative z-10">Get started</span>
           <ArrowRight className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D3A8FF] to-transparent opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-300 -translate-x-full group-hover:translate-x-full ease-in-out group-hover:duration-1000"></div>
-        </button>
+        </button> */}
+        <button
+            onClick={() => window.location.href = "/login"}
+                className="relative bg-[#0E0C1A] text-white rounded-full px-8 py-3  flex items-center justify-center gap-3  cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 20px 0px rgba(103, 58, 183, 0.3)",
+                }}
+              >
+               
+                <span className="text-lg"> Get Started</span>
+               
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
+                    style={{
+                      background: "linear-gradient(90deg, transparent, rgba(103, 58, 183, 0.1), transparent)",
+                      backgroundSize: "200% 100%",
+                      animation: "shimmer 2s infinite",
+                    }}
+                  ></div>
+                
+              </button>
       </div>
+      <style jsx global>{`
+        @keyframes shimmer {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
+          }
+        }
+      `}</style>
     </main>
   )
 }

@@ -28,7 +28,7 @@ export default function RootLayout({
           </div>
           <Toaster
             theme="dark"
-            position="top-right"
+            position="bottom-right"
             toastOptions={{
               style: {
                 background: "#171522",
