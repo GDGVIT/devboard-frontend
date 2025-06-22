@@ -121,16 +121,7 @@ export default function Navbar() {
                           <span>Profile</span>
                         </button>
 
-                        <button
-                          onClick={() => {
-                            router.push("/settings")
-                            setIsDropdownOpen(false)
-                          }}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-gray-300 hover:bg-[#211D2E] hover:text-white transition-colors"
-                        >
-                          <Settings className="w-4 h-4" />
-                          <span>Settings</span>
-                        </button>
+                        
 
                         <div className="border-t border-[#3F1469] my-1"></div>
 
