@@ -1,3 +1,5 @@
-export function dummyFunction(): string {
-  return "This is a dummy function.";
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  return NextResponse.json({});
 }
