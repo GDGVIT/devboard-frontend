@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
-import { ArrowLeft, Loader2, Save, FileText, Eye } from "lucide-react"
+import { ArrowLeft, Loader2, Save, FileText, Eye, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth"
 import ReactMarkdown from "react-markdown"
@@ -52,6 +52,7 @@ export default function ReadmeEditor() {
   const [readmeData, setReadmeData] = useState<ReadmeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [isNewReadme, setIsNewReadme] = useState(false)
   const [isAuthChecking, setIsAuthChecking] = useState(true)
@@ -155,6 +156,69 @@ export default function ReadmeEditor() {
     }
   }, [isAuthChecking, fetchReadme])
 
+  // AI Generate README
+  const handleAIGenerate = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch("/api/readme/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: user?.username || "developer",
+          currentContent: markdownContent,
+          isNew: isNewReadme,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to generate README")
+      }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let generatedContent = ""
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value)
+          const lines = chunk.split("\n")
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6))
+
+                if (data.type === "content") {
+                  generatedContent += data.content
+                  setMarkdownContent(generatedContent)
+                } else if (data.type === "complete") {
+                  toast.success("README generated successfully! ✨")
+                  break
+                } else if (data.type === "error") {
+                  throw new Error(data.error)
+                }
+              } catch (e) {
+                // Ignore parsing errors for incomplete chunks
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("AI generation error:", error)
+      toast.error("Failed to generate README", {
+        description: error instanceof Error ? error.message : "Please try again",
+      })
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   // Save/Commit README
   const handleCommit = async () => {
     if (!hasChanges) {
@@ -165,16 +229,22 @@ export default function ReadmeEditor() {
     setIsSaving(true)
     try {
       const method = isNewReadme ? "POST" : "PATCH"
+
+      // Encode content to base64 for the API
+      const encodedContent = btoa(markdownContent)
+
       const payload = isNewReadme
         ? {
-            content: markdownContent,
+            content: encodedContent,
             message: "Create README.md",
           }
         : {
-            content: markdownContent,
+            content: encodedContent,
             message: "Update README.md",
             sha: readmeData?.sha,
           }
+
+      console.log("Committing with payload:", { method, payload })
 
       const response = await makeAuthenticatedRequest(`${API_BASE_URL}/api/github/readme`, {
         method,
@@ -197,6 +267,7 @@ export default function ReadmeEditor() {
         })
       } else {
         const error = await response.json()
+        console.error("Commit error response:", error)
         throw new Error(error.error || "Failed to commit README")
       }
     } catch (error) {
@@ -244,14 +315,26 @@ export default function ReadmeEditor() {
             </div>
           </div>
 
-          <Button
-            onClick={handleCommit}
-            disabled={!hasChanges || isSaving}
-            className="bg-[#3F1469] hover:bg-[#4a1a7d] text-white"
-          >
-            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-            {isSaving ? "Committing..." : "Commit changes"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleAIGenerate}
+              disabled={isGenerating || isSaving}
+              variant="outline"
+              className="bg-[#1A1625] border-[#3F1469] hover:bg-[#211D2E] text-white"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              {isGenerating ? "Generating..." : "AI Generate"}
+            </Button>
+
+            <Button
+              onClick={handleCommit}
+              disabled={!hasChanges || isSaving}
+              className="bg-[#3F1469] hover:bg-[#4a1a7d] text-white"
+            >
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {isSaving ? "Committing..." : "Commit changes"}
+            </Button>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -297,6 +380,7 @@ export default function ReadmeEditor() {
                         }
                         className="w-full h-full bg-[#0F0C14] border-[#3F1469] text-white font-mono text-sm resize-none focus:ring-2 focus:ring-[#3F1469] focus:border-transparent"
                         style={{ minHeight: "100%" }}
+                        disabled={isGenerating}
                       />
                     </div>
                   </div>
