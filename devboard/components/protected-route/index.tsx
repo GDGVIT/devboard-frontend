@@ -1,11 +1,10 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/lib/auth-context"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -16,12 +15,18 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthed, setIsAuthed] = useState(false)
   const router = useRouter()
-  const { isAuthenticated, refreshToken } = useAuth()
+  const { isAuthenticated, refreshToken, isLoading: authLoading } = useAuth()
+
   useEffect(() => {
     const checkAuth = async () => {
+      // Wait for auth context to finish loading
+      if (authLoading) {
+        return
+      }
+
       try {
         // First check if we have valid tokens
-            if (isAuthenticated) {
+        if (isAuthenticated) {
           setIsAuthed(true)
           setIsLoading(false)
           return
@@ -44,9 +49,9 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
     }
 
     checkAuth()
-  }, [router])
+  }, [isAuthenticated, refreshToken, router, authLoading])
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       fallback || (
         <div className="min-h-screen bg-[#0F0C14] flex items-center justify-center">
@@ -65,5 +70,3 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
 
   return <>{children}</>
 }
-
-

@@ -8,11 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { ArrowLeft, Loader2, Save, FileText, Eye, Sparkles } from "lucide-react"
 import { toast } from "sonner"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/lib/auth-context"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
+import rehypeRaw from "rehype-raw"
 import "highlight.js/styles/github-dark.css"
+import ProtectedRoute from "@/components/protected-route"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://140.245.225.60"
 
@@ -46,7 +48,7 @@ const getCookie = (name: string): string | null => {
   }
 }
 
-export default function ReadmeEditor() {
+function ReadmeEditorContent() {
   const [markdownContent, setMarkdownContent] = useState("")
   const [originalContent, setOriginalContent] = useState("")
   const [readmeData, setReadmeData] = useState<ReadmeData | null>(null)
@@ -55,8 +57,7 @@ export default function ReadmeEditor() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [isNewReadme, setIsNewReadme] = useState(false)
-  const [isAuthChecking, setIsAuthChecking] = useState(true)
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
 
   const [showAIForm, setShowAIForm] = useState(false)
@@ -67,25 +68,6 @@ export default function ReadmeEditor() {
     interests: "",
     goals: "",
   })
-
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = () => {
-      const accessToken = getCookie("devboard_access_token")
-
-      if (!accessToken) {
-        console.log("No access token found, redirecting to login")
-        router.push("/login")
-        return
-      }
-
-      setIsAuthChecking(false)
-    }
-
-    // Small delay to ensure auth context is loaded
-    const timer = setTimeout(checkAuth, 100)
-    return () => clearTimeout(timer)
-  }, [router])
 
   // Decode base64 content
   const decodeBase64Content = (content: string): string => {
@@ -117,8 +99,6 @@ export default function ReadmeEditor() {
 
   // Fetch README from GitHub
   const fetchReadme = useCallback(async () => {
-    if (isAuthChecking) return
-
     setIsLoading(true)
     try {
       const response = await makeAuthenticatedRequest(`${API_BASE_URL}/api/github/readme`)
@@ -128,9 +108,7 @@ export default function ReadmeEditor() {
         setIsNewReadme(true)
         setMarkdownContent("")
         setOriginalContent("")
-        toast.success("Let's create your first README! 🚀", {
-          description: "Start writing your amazing GitHub profile README",
-        })
+        toast.success("Let's create your first README!")
       } else if (response.ok) {
         const data: ReadmeData = await response.json()
         const decodedContent = decodeBase64Content(data.content)
@@ -138,32 +116,28 @@ export default function ReadmeEditor() {
         setMarkdownContent(decodedContent)
         setOriginalContent(decodedContent)
         setIsNewReadme(false)
-        toast.success("README loaded successfully! 📝")
+        toast.success("README loaded successfully!")
       } else {
         const errorData = await response.json()
         throw new Error(errorData.error || "Failed to fetch README")
       }
     } catch (error) {
       console.error("Error fetching README:", error)
-      toast.error("Failed to load README", {
-        description: error instanceof Error ? error.message : "Please try again or check your connection",
-      })
+      toast.error("Failed to load README")
     } finally {
       setIsLoading(false)
     }
-  }, [isAuthChecking])
+  }, [])
 
   // Check for changes
   useEffect(() => {
     setHasChanges(markdownContent !== originalContent)
   }, [markdownContent, originalContent])
 
-  // Load README when auth check is complete
+  // Load README when component mounts
   useEffect(() => {
-    if (!isAuthChecking) {
-      fetchReadme()
-    }
-  }, [isAuthChecking, fetchReadme])
+    fetchReadme()
+  }, [fetchReadme])
 
   // Replace the btoa line with this function
   const encodeToBase64 = (str: string): string => {
@@ -220,7 +194,7 @@ export default function ReadmeEditor() {
                   generatedContent += data.content
                   setMarkdownContent(generatedContent)
                 } else if (data.type === "complete") {
-                  toast.success("README generated successfully! ✨")
+                  toast.success("README generated successfully!")
                   break
                 } else if (data.type === "error") {
                   throw new Error(data.error)
@@ -234,9 +208,7 @@ export default function ReadmeEditor() {
       }
     } catch (error) {
       console.error("AI generation error:", error)
-      toast.error("Failed to generate README", {
-        description: error instanceof Error ? error.message : "Please try again",
-      })
+      toast.error("Failed to generate README")
     } finally {
       setIsGenerating(false)
     }
@@ -285,9 +257,7 @@ export default function ReadmeEditor() {
           setReadmeData(result.content)
         }
 
-        toast.success("README committed successfully! 🎉", {
-          description: isNewReadme ? "Your first README has been created" : "Changes have been saved to GitHub",
-        })
+        toast.success("README committed successfully!")
       } else {
         const error = await response.json()
         console.error("Commit error response:", error)
@@ -295,24 +265,10 @@ export default function ReadmeEditor() {
       }
     } catch (error) {
       console.error("Error committing README:", error)
-      toast.error("Failed to commit changes", {
-        description: error instanceof Error ? error.message : "Please try again",
-      })
+      toast.error("Failed to commit changes")
     } finally {
       setIsSaving(false)
     }
-  }
-
-  // Show loading while checking auth
-  if (isAuthChecking) {
-    return (
-      <main className="min-h-screen bg-[#0F0C14] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#D3A8FF] mx-auto mb-4" />
-          <p className="text-white">Checking authentication...</p>
-        </div>
-      </main>
-    )
   }
 
   return (
@@ -480,7 +436,7 @@ export default function ReadmeEditor() {
                       <FileText className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-300">Code</span>
                     </div>
-                    <div className="flex-1 p-4">
+                    <div className="flex-1 p-4 overflow-auto">
                       <Textarea
                         value={markdownContent}
                         onChange={(e) => setMarkdownContent(e.target.value)}
@@ -511,36 +467,46 @@ export default function ReadmeEditor() {
                         <div className="prose prose-invert prose-purple max-w-none">
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[rehypeHighlight]}
+                            rehypePlugins={[rehypeHighlight, rehypeRaw]}
                             components={{
                               h1: ({ children }) => (
-                                <h1 className="text-3xl font-bold text-white mb-4 border-b border-[#3F1469] pb-2">
+                                <h1 className="text-3xl font-bold text-white mb-6 border-b border-[#3F1469] pb-3">
                                   {children}
                                 </h1>
                               ),
                               h2: ({ children }) => (
-                                <h2 className="text-2xl font-semibold text-white mb-3 mt-6">{children}</h2>
+                                <h2 className="text-2xl font-semibold text-white mb-4 mt-8">{children}</h2>
                               ),
                               h3: ({ children }) => (
-                                <h3 className="text-xl font-semibold text-white mb-2 mt-4">{children}</h3>
+                                <h3 className="text-xl font-semibold text-white mb-3 mt-6">{children}</h3>
                               ),
                               p: ({ children }) => <p className="text-white mb-4 leading-relaxed">{children}</p>,
-                              ul: ({ children }) => <ul className="text-white mb-4 space-y-1">{children}</ul>,
-                              ol: ({ children }) => <ol className="text-white mb-4 space-y-1">{children}</ol>,
-                              li: ({ children }) => <li className="ml-4 text-white">{children}</li>,
-                              code: ({ children, className }) => (
-                                <code
-                                  className={`${
-                                    className
-                                      ? "block bg-[#1A1625] p-4 rounded-lg border border-[#3F1469] overflow-x-auto"
-                                      : "bg-[#1A1625] px-2 py-1 rounded text-[#D3A8FF]"
-                                  }`}
-                                >
+                              ul: ({ children }) => (
+                                <ul className="text-white mb-4 space-y-2 list-disc list-inside pl-4">{children}</ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="text-white mb-4 space-y-2 list-decimal list-inside pl-4">{children}</ol>
+                              ),
+                              li: ({ children }) => <li className="text-white leading-relaxed">{children}</li>,
+                              code: ({ children, className }) => {
+                                if (className?.includes("inline")) {
+                                  return (
+                                    <code className="bg-[#1A1625] px-2 py-1 rounded text-[#D3A8FF]">{children}</code>
+                                  )
+                                }
+                                return (
+                                  <code className="block bg-[#1A1625] p-4 rounded-lg border border-[#3F1469] overflow-x-auto text-white">
+                                    {children}
+                                  </code>
+                                )
+                              },
+                              pre: ({ children }) => (
+                                <pre className="bg-[#1A1625] p-4 rounded-lg border border-[#3F1469] overflow-x-auto mb-4">
                                   {children}
-                                </code>
+                                </pre>
                               ),
                               blockquote: ({ children }) => (
-                                <blockquote className="border-l-4 border-[#3F1469] pl-4 italic text-white mb-4">
+                                <blockquote className="border-l-4 border-[#3F1469] pl-4 italic text-white mb-4 bg-[#1A1625] p-4 rounded-r-lg">
                                   {children}
                                 </blockquote>
                               ),
@@ -549,17 +515,23 @@ export default function ReadmeEditor() {
                                   href={href}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[#D3A8FF] hover:text-[#B78AFF] underline"
+                                  className="text-[#D3A8FF] hover:text-[#B78AFF] underline transition-colors"
                                 >
                                   {children}
                                 </a>
                               ),
                               img: ({ src, alt }) => (
-                                <img
-                                  src={src || "/placeholder.svg"}
-                                  alt={alt}
-                                  className="max-w-full h-auto rounded-lg border border-[#3F1469] my-4"
-                                />
+                                <div className="my-4 text-center">
+                                  <img
+                                    src={src || "/placeholder.svg"}
+                                    alt={alt || ""}
+                                    className="max-w-full h-auto rounded-lg border border-[#3F1469] inline-block"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.style.display = "none"
+                                    }}
+                                  />
+                                </div>
                               ),
                               table: ({ children }) => (
                                 <div className="overflow-x-auto mb-4">
@@ -574,6 +546,10 @@ export default function ReadmeEditor() {
                               td: ({ children }) => (
                                 <td className="border border-[#3F1469] px-4 py-2 text-white">{children}</td>
                               ),
+                              strong: ({ children }) => (
+                                <strong className="text-[#D3A8FF] font-semibold">{children}</strong>
+                              ),
+                              em: ({ children }) => <em className="text-gray-300 italic">{children}</em>,
                             }}
                           >
                             {markdownContent}
@@ -601,5 +577,13 @@ export default function ReadmeEditor() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function ReadmeEditor() {
+  return (
+    <ProtectedRoute>
+      <ReadmeEditorContent />
+    </ProtectedRoute>
   )
 }

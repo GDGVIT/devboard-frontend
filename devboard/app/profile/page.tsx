@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { User, Mail, MapPin, LinkIcon, Star, Building, Clock, ArrowLeft } from "lucide-react"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import ProtectedRoute from "@/components/protected-route"
 

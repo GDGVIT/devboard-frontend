@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Loader2, Upload, Copy, Download, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/lib/auth-context"
 
 interface GenerationState {
   currentStep: string

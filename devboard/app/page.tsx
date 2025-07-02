@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/lib/auth-context"
 import HeroSection from "@/components/Hero"
 
 export default function Home() {

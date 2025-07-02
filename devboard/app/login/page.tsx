@@ -6,7 +6,7 @@ import { Poppins } from "next/font/google"
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { useAuth } from "@/lib/auth"
+import { useAuth } from "@/lib/auth-context"
 
 // Initialize the Poppins font
 const poppins = Poppins({
@@ -52,10 +52,14 @@ export default function LoginPage() {
       if (accessToken && refreshToken) {
         console.log("✅ Tokens found, logging in...")
         setIsLoading(true)
-
         try {
           await login(accessToken, refreshToken)
           toast.success("Login successful!")
+
+          // Clean up URL
+          const cleanUrl = window.location.pathname
+          window.history.replaceState({}, document.title, cleanUrl)
+
           router.push("/")
         } catch (error) {
           console.error("❌ Login failed:", error)
@@ -148,6 +152,7 @@ export default function LoginPage() {
 
     // Redirect directly to the backend auth endpoint
     const authUrl = `${API_BASE_URL}/api/auth/login?callback_url=${encodeURIComponent(callbackUrl)}`
+
     window.location.href = authUrl
   }
 
