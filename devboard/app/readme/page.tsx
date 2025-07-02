@@ -59,6 +59,15 @@ export default function ReadmeEditor() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
 
+  const [showAIForm, setShowAIForm] = useState(false)
+  const [aiFormData, setAiFormData] = useState({
+    field: "",
+    experience: "",
+    skills: "",
+    interests: "",
+    goals: "",
+  })
+
   // Check authentication
   useEffect(() => {
     const checkAuth = () => {
@@ -156,9 +165,22 @@ export default function ReadmeEditor() {
     }
   }, [isAuthChecking, fetchReadme])
 
+  // Replace the btoa line with this function
+  const encodeToBase64 = (str: string): string => {
+    // Convert string to UTF-8 bytes, then to base64
+    return btoa(unescape(encodeURIComponent(str)))
+  }
+
   // AI Generate README
   const handleAIGenerate = async () => {
+    if (!showAIForm) {
+      setShowAIForm(true)
+      return
+    }
+
     setIsGenerating(true)
+    setShowAIForm(false)
+
     try {
       const response = await fetch("/api/readme/generate", {
         method: "POST",
@@ -169,6 +191,7 @@ export default function ReadmeEditor() {
           username: user?.username || "developer",
           currentContent: markdownContent,
           isNew: isNewReadme,
+          personalInfo: aiFormData,
         }),
       })
 
@@ -231,7 +254,7 @@ export default function ReadmeEditor() {
       const method = isNewReadme ? "POST" : "PATCH"
 
       // Encode content to base64 for the API
-      const encodedContent = btoa(markdownContent)
+      const encodedContent = encodeToBase64(markdownContent)
 
       const payload = isNewReadme
         ? {
@@ -337,6 +360,94 @@ export default function ReadmeEditor() {
           </div>
         </div>
 
+        {showAIForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="bg-[#171522] border-[#3F1469] w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-white">Personalize Your README</CardTitle>
+                <p className="text-gray-400 text-sm">Tell us about yourself to generate a better README</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-white text-sm mb-2 block">What field are you in?</label>
+                  <input
+                    type="text"
+                    value={aiFormData.field}
+                    onChange={(e) => setAiFormData({ ...aiFormData, field: e.target.value })}
+                    placeholder="e.g., Frontend Developer, Data Scientist, DevOps Engineer"
+                    className="w-full p-2 bg-[#1A1625] border border-[#3F1469] rounded text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white text-sm mb-2 block">Experience level</label>
+                  <select
+                    value={aiFormData.experience}
+                    onChange={(e) => setAiFormData({ ...aiFormData, experience: e.target.value })}
+                    className="w-full p-2 bg-[#1A1625] border border-[#3F1469] rounded text-white"
+                  >
+                    <option value="">Select experience</option>
+                    <option value="student">Student</option>
+                    <option value="junior">Junior (0-2 years)</option>
+                    <option value="mid">Mid-level (2-5 years)</option>
+                    <option value="senior">Senior (5+ years)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-white text-sm mb-2 block">Main skills/technologies</label>
+                  <input
+                    type="text"
+                    value={aiFormData.skills}
+                    onChange={(e) => setAiFormData({ ...aiFormData, skills: e.target.value })}
+                    placeholder="e.g., React, Python, Docker, AWS"
+                    className="w-full p-2 bg-[#1A1625] border border-[#3F1469] rounded text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white text-sm mb-2 block">Current interests/learning</label>
+                  <input
+                    type="text"
+                    value={aiFormData.interests}
+                    onChange={(e) => setAiFormData({ ...aiFormData, interests: e.target.value })}
+                    placeholder="e.g., Machine Learning, Web3, Mobile Development"
+                    className="w-full p-2 bg-[#1A1625] border border-[#3F1469] rounded text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white text-sm mb-2 block">Goals/What you're looking for</label>
+                  <input
+                    type="text"
+                    value={aiFormData.goals}
+                    onChange={(e) => setAiFormData({ ...aiFormData, goals: e.target.value })}
+                    placeholder="e.g., Open source contributions, Job opportunities, Collaboration"
+                    className="w-full p-2 bg-[#1A1625] border border-[#3F1469] rounded text-white"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    onClick={() => setShowAIForm(false)}
+                    variant="outline"
+                    className="flex-1 bg-[#1A1625] border-[#3F1469] hover:bg-[#211D2E] text-white"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAIGenerate}
+                    className="flex-1 bg-[#3F1469] hover:bg-[#4a1a7d] text-white"
+                    disabled={!aiFormData.field}
+                  >
+                    Generate README
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Loading State */}
         {isLoading ? (
           <div className="flex items-center justify-center h-96">
@@ -413,10 +524,10 @@ export default function ReadmeEditor() {
                               h3: ({ children }) => (
                                 <h3 className="text-xl font-semibold text-white mb-2 mt-4">{children}</h3>
                               ),
-                              p: ({ children }) => <p className="text-gray-300 mb-4 leading-relaxed">{children}</p>,
-                              ul: ({ children }) => <ul className="text-gray-300 mb-4 space-y-1">{children}</ul>,
-                              ol: ({ children }) => <ol className="text-gray-300 mb-4 space-y-1">{children}</ol>,
-                              li: ({ children }) => <li className="ml-4">{children}</li>,
+                              p: ({ children }) => <p className="text-white mb-4 leading-relaxed">{children}</p>,
+                              ul: ({ children }) => <ul className="text-white mb-4 space-y-1">{children}</ul>,
+                              ol: ({ children }) => <ol className="text-white mb-4 space-y-1">{children}</ol>,
+                              li: ({ children }) => <li className="ml-4 text-white">{children}</li>,
                               code: ({ children, className }) => (
                                 <code
                                   className={`${
@@ -429,7 +540,7 @@ export default function ReadmeEditor() {
                                 </code>
                               ),
                               blockquote: ({ children }) => (
-                                <blockquote className="border-l-4 border-[#3F1469] pl-4 italic text-gray-400 mb-4">
+                                <blockquote className="border-l-4 border-[#3F1469] pl-4 italic text-white mb-4">
                                   {children}
                                 </blockquote>
                               ),
@@ -461,7 +572,7 @@ export default function ReadmeEditor() {
                                 </th>
                               ),
                               td: ({ children }) => (
-                                <td className="border border-[#3F1469] px-4 py-2 text-gray-300">{children}</td>
+                                <td className="border border-[#3F1469] px-4 py-2 text-white">{children}</td>
                               ),
                             }}
                           >

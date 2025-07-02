@@ -7,7 +7,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, currentContent, isNew } = await request.json()
+    const { username, currentContent, isNew, personalInfo } = await request.json()
 
     if (!username) {
       return NextResponse.json({ error: "Username is required" }, { status: 400 })
@@ -20,14 +20,29 @@ export async function POST(request: NextRequest) {
         try {
           // Step 1: Analyze
           const analysisPrompt = isNew
-            ? `Analyze the username "${username}" and create a professional analysis for a GitHub README. 
-               Consider what kind of developer they might be and suggest appropriate sections.
-               Return a brief analysis of what should be included in their README.`
+            ? `Analyze the username "${username}" and create a professional analysis for a GitHub README.
+     
+     Personal Information:
+     - Field: ${personalInfo?.field || "Not specified"}
+     - Experience: ${personalInfo?.experience || "Not specified"}  
+     - Skills: ${personalInfo?.skills || "Not specified"}
+     - Interests: ${personalInfo?.interests || "Not specified"}
+     - Goals: ${personalInfo?.goals || "Not specified"}
+     
+     Consider what kind of developer they are and suggest appropriate sections.
+     Return a brief analysis of what should be included in their README.`
             : `Analyze this existing README content and suggest improvements:
-               
-               ${currentContent}
-               
-               Provide analysis on what's good, what's missing, and what could be improved.`
+     
+     ${currentContent}
+     
+     Personal Information for enhancement:
+     - Field: ${personalInfo?.field || "Not specified"}
+     - Experience: ${personalInfo?.experience || "Not specified"}
+     - Skills: ${personalInfo?.skills || "Not specified"}
+     - Interests: ${personalInfo?.interests || "Not specified"}
+     - Goals: ${personalInfo?.goals || "Not specified"}
+     
+     Provide analysis on what's good, what's missing, and what could be improved.`
 
           const analysisResult = await model.generateContent(analysisPrompt)
           const analysis = analysisResult.response.text()
@@ -35,18 +50,27 @@ export async function POST(request: NextRequest) {
           // Step 2: Generate
           const generatePrompt = isNew
             ? `Based on this analysis: ${analysis}
-               
-               Create a comprehensive GitHub profile README for username "${username}".
-               Include these sections:
-               - Header with greeting and name
-               - About Me section
-               - Skills and Technologies
-               - Current Projects
-               - GitHub Stats
-               - Connect with Me
-               
-               Make it engaging, professional, and use appropriate emojis.
-               Return ONLY the markdown content, no explanations.`
+     
+     Create a comprehensive GitHub profile README for username "${username}".
+     
+     Personal Details:
+     - Field: ${personalInfo?.field || "Developer"}
+     - Experience Level: ${personalInfo?.experience || "Not specified"}
+     - Main Skills: ${personalInfo?.skills || "Various technologies"}
+     - Current Interests: ${personalInfo?.interests || "Learning new technologies"}
+     - Goals: ${personalInfo?.goals || "Growing as a developer"}
+     
+     Include these sections tailored to their profile:
+     - Header with greeting and name
+     - About Me section (based on field and experience)
+     - Skills and Technologies (emphasize their main skills)
+     - Current Projects/Learning (based on interests)
+     - GitHub Stats
+     - Goals and Collaboration (based on their goals)
+     - Connect with Me
+     
+     Make it engaging, professional, and personalized to their field and experience level.
+     Return ONLY the markdown content, no explanations.`
             : `Based on this analysis: ${analysis}
                
                Improve this existing README content:
