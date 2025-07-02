@@ -12,7 +12,7 @@ const poppins = Poppins({
   variable: "--font-poppins",
 })
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://140.245.225.60"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://devboard.varshith.tech"
 
 // Types
 interface Shape {

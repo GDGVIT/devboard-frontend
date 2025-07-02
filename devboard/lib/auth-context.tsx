@@ -28,7 +28,7 @@ export interface AuthContextType extends AuthState {
 }
 
 // Constants
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://140.245.225.60"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://devboard.varshith.tech"
 
 // Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
