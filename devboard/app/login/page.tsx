@@ -160,16 +160,6 @@ export default function LoginPage() {
     <main className={`min-h-screen bg-[#0F0C14] relative overflow-hidden ${poppins.variable} font-sans`}>
       {/* Background canvas for floating shapes */}
       <canvas ref={canvasRef} className="absolute inset-0 z-0" style={{ filter: "blur(80px)" }} />
-
-      {/* Logo */}
-      <div className="absolute top-8 left-8 z-10">
-        <Link href="/">
-          <h1 className="text-white text-2xl font-bold cursor-pointer hover:text-[#D3A8FF] transition-colors">
-            DevBoard
-          </h1>
-        </Link>
-      </div>
-
       {/* Login Card */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
         <div className="bg-[#171522] rounded-3xl w-full max-w-md overflow-hidden">
