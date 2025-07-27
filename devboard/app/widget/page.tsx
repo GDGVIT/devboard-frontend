@@ -224,6 +224,40 @@ interface Widget {
   tags: string[]
 }
 
+// Utility function to determine if a color is light or dark
+const isLightColor = (color: string): boolean => {
+  // Handle hex colors
+  if (color.startsWith("#")) {
+    const hex = color.replace("#", "")
+    const r = Number.parseInt(hex.substr(0, 2), 16)
+    const g = Number.parseInt(hex.substr(2, 2), 16)
+    const b = Number.parseInt(hex.substr(4, 2), 16)
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return brightness > 128
+  }
+
+  // Handle rgb colors
+  if (color.startsWith("rgb")) {
+    const matches = color.match(/\d+/g)
+    if (matches && matches.length >= 3) {
+      const r = Number.parseInt(matches[0])
+      const g = Number.parseInt(matches[1])
+      const b = Number.parseInt(matches[2])
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000
+      return brightness > 128
+    }
+  }
+
+  // Default to dark for unknown formats
+  return false
+}
+
+// Get contrasting text color
+const getContrastingTextColor = (backgroundColor: string): string => {
+  if (backgroundColor === "transparent") return "#FFFFFF"
+  return isLightColor(backgroundColor) ? "#000000" : "#FFFFFF"
+}
+
 // Cookie utility
 const getCookie = (name: string): string | null => {
   if (typeof window === "undefined") return null
@@ -293,7 +327,7 @@ function DraggableElement({ element }: { element: any }) {
 
   return (
     <div
-      ref={dragRef}
+      ref={dragRef as any}
       className={`flex items-center gap-3 p-3 rounded-lg border cursor-move transition-all duration-200 ${
         isDragging
           ? "opacity-50 border-blue-400 bg-blue-500/10"
@@ -674,7 +708,7 @@ function Canvas({
     <div className="relative w-full h-full overflow-hidden bg-gray-950">
       <div className="w-full h-full flex items-center justify-center p-8">
         <div
-          ref={dropRef}
+          ref={dropRef as any}
           className={`relative border-2 border-dashed rounded-xl overflow-hidden transition-all duration-300 ${
             isOver ? "border-blue-400 bg-blue-500/5" : "border-gray-600"
           }`}
@@ -825,6 +859,14 @@ function GitHubWidgetBuilderContent() {
       elements: prev.elements.map((el) => (el.id === updatedElement.id ? updatedElement : el)),
     }))
     setSelectedElements((prev) => prev.map((el) => (el.id === updatedElement.id ? updatedElement : el)))
+  }
+
+  // Update element with smart text color
+  const updateElementWithSmartColor = (updatedElement: WidgetElement, backgroundChanged = false) => {
+    if (backgroundChanged && (updatedElement.type === "text" || updatedElement.type === "variable")) {
+      updatedElement.style.color = getContrastingTextColor(updatedElement.style.backgroundColor)
+    }
+    updateElement(updatedElement)
   }
 
   // Delete element
@@ -1003,7 +1045,7 @@ function GitHubWidgetBuilderContent() {
               </Button>
               <Button
                 onClick={() => handleCanvasSizeSelect(selectedCanvasSize)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
               >
                 Create Widget
               </Button>
@@ -1056,15 +1098,25 @@ function GitHubWidgetBuilderContent() {
                   ))}
                 </div>
                 <Select onValueChange={addTag}>
-                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white cursor-pointer">
                     <SelectValue placeholder="Add a tag" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-600">
-                    <SelectItem value="stats">Stats</SelectItem>
-                    <SelectItem value="contributions">Contributions</SelectItem>
-                    <SelectItem value="repositories">Repositories</SelectItem>
-                    <SelectItem value="profile">Profile</SelectItem>
-                    <SelectItem value="activity">Activity</SelectItem>
+                    <SelectItem value="stats" className="cursor-pointer">
+                      Stats
+                    </SelectItem>
+                    <SelectItem value="contributions" className="cursor-pointer">
+                      Contributions
+                    </SelectItem>
+                    <SelectItem value="repositories" className="cursor-pointer">
+                      Repositories
+                    </SelectItem>
+                    <SelectItem value="profile" className="cursor-pointer">
+                      Profile
+                    </SelectItem>
+                    <SelectItem value="activity" className="cursor-pointer">
+                      Activity
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1074,11 +1126,11 @@ function GitHubWidgetBuilderContent() {
               <Button
                 variant="outline"
                 onClick={() => setShowSaveModal(false)}
-                className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                className="border-gray-600 text-gray-300 hover:bg-gray-800 cursor-pointer"
               >
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 {isSaving ? (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -1101,7 +1153,7 @@ function GitHubWidgetBuilderContent() {
             <Button
               variant="outline"
               size="sm"
-              className="border-gray-600 text-gray-300 hover:bg-gray-800 bg-transparent"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800 bg-transparent cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
@@ -1113,12 +1165,12 @@ function GitHubWidgetBuilderContent() {
             <Button
               onClick={() => navigator.clipboard.writeText(generateBackendContent(widget))}
               variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800 cursor-pointer"
             >
               <Copy className="w-4 h-4 mr-2" />
               Copy Code
             </Button>
-            <Button onClick={() => setShowSaveModal(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => setShowSaveModal(true)} className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
               <Save className="w-4 h-4 mr-2" />
               Save Widget
             </Button>
@@ -1131,9 +1183,15 @@ function GitHubWidgetBuilderContent() {
           <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col h-full">
             <Tabs defaultValue="elements" className="flex-1 flex flex-col h-full">
               <TabsList className="grid w-full grid-cols-3 bg-gray-800 m-2 flex-shrink-0">
-                <TabsTrigger value="elements">Elements</TabsTrigger>
-                <TabsTrigger value="variables">Variables</TabsTrigger>
-                <TabsTrigger value="emojis">Emojis</TabsTrigger>
+                <TabsTrigger value="elements" className="cursor-pointer">
+                  Elements
+                </TabsTrigger>
+                <TabsTrigger value="variables" className="cursor-pointer">
+                  Variables
+                </TabsTrigger>
+                <TabsTrigger value="emojis" className="cursor-pointer">
+                  Emojis
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="elements" className="flex-1 overflow-hidden m-0">
@@ -1161,7 +1219,7 @@ function GitHubWidgetBuilderContent() {
                                 canvas: { ...prev.canvas, showGrid: !prev.canvas.showGrid },
                               }))
                             }
-                            className="flex-1"
+                            className="flex-1 cursor-pointer"
                           >
                             <Grid3X3 className="w-4 h-4 mr-2" />
                             Grid
@@ -1175,7 +1233,7 @@ function GitHubWidgetBuilderContent() {
                                 canvas: { ...prev.canvas, snapToGrid: !prev.canvas.snapToGrid },
                               }))
                             }
-                            className="flex-1"
+                            className="flex-1 cursor-pointer"
                           >
                             <Target className="w-4 h-4 mr-2" />
                             Snap
@@ -1187,7 +1245,7 @@ function GitHubWidgetBuilderContent() {
                             size="sm"
                             variant="outline"
                             onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-                            className="border-gray-600"
+                            className="border-gray-600 cursor-pointer"
                           >
                             <ZoomOut className="w-4 h-4" />
                           </Button>
@@ -1198,11 +1256,16 @@ function GitHubWidgetBuilderContent() {
                             size="sm"
                             variant="outline"
                             onClick={() => setZoom(Math.min(3, zoom + 0.25))}
-                            className="border-gray-600"
+                            className="border-gray-600 cursor-pointer"
                           >
                             <ZoomIn className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setZoom(1)} className="border-gray-600">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setZoom(1)}
+                            className="border-gray-600 cursor-pointer"
+                          >
                             <Maximize2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -1218,7 +1281,7 @@ function GitHubWidgetBuilderContent() {
                     <h3 className="text-lg font-semibold">GitHub Variables</h3>
                     {Object.entries(variablesByCategory).map(([category, variables]) => (
                       <Collapsible key={category} defaultOpen>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-gray-800 rounded-lg hover:bg-gray-700">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
                           <span className="font-medium">{category}</span>
                           <ChevronDown className="w-4 h-4" />
                         </CollapsibleTrigger>
@@ -1261,7 +1324,7 @@ function GitHubWidgetBuilderContent() {
                                     },
                                     content: {
                                       variable: variable.name,
-                                      text: `${variable.emoji} {{${variable.name}}}`,
+                                      text: `{{${variable.name}}}`,
                                     },
                                   }
                                   addElement(newElement)
@@ -1292,7 +1355,7 @@ function GitHubWidgetBuilderContent() {
                     <h3 className="text-lg font-semibold">GitHub Emojis</h3>
                     {Object.entries(emojisByCategory).map(([category, emojis]) => (
                       <Collapsible key={category} defaultOpen>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-gray-800 rounded-lg hover:bg-gray-700">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
                           <span className="font-medium">{category}</span>
                           <ChevronDown className="w-4 h-4" />
                         </CollapsibleTrigger>
@@ -1389,6 +1452,7 @@ function GitHubWidgetBuilderContent() {
                           size="sm"
                           variant="ghost"
                           onClick={() => updateElement({ ...selectedElement, visible: !selectedElement.visible })}
+                          className="cursor-pointer"
                         >
                           {selectedElement.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                         </Button>
@@ -1396,6 +1460,7 @@ function GitHubWidgetBuilderContent() {
                           size="sm"
                           variant="ghost"
                           onClick={() => updateElement({ ...selectedElement, locked: !selectedElement.locked })}
+                          className="cursor-pointer"
                         >
                           {selectedElement.locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                         </Button>
@@ -1403,7 +1468,7 @@ function GitHubWidgetBuilderContent() {
                           size="sm"
                           variant="ghost"
                           onClick={() => deleteElement(selectedElement.id)}
-                          className="text-red-400 hover:text-red-300"
+                          className="text-red-400 hover:text-red-300 cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -1497,22 +1562,21 @@ function GitHubWidgetBuilderContent() {
                         <Select
                           value={selectedElement.content.variable || "totalCommitContributions"}
                           onValueChange={(value) => {
-                            const variable = GITHUB_VARIABLES.find((v) => v.name === value)
                             updateElement({
                               ...selectedElement,
                               content: {
                                 variable: value,
-                                text: `${variable?.emoji || ""} {{${value}}}`,
+                                text: `{{${value}}}`,
                               },
                             })
                           }}
                         >
-                          <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                          <SelectTrigger className="bg-gray-800 border-gray-600 text-white cursor-pointer">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-gray-800 border-gray-600">
                             {GITHUB_VARIABLES.map((variable) => (
-                              <SelectItem key={variable.name} value={variable.name}>
+                              <SelectItem key={variable.name} value={variable.name} className="cursor-pointer">
                                 {variable.emoji} {variable.label}
                               </SelectItem>
                             ))}
@@ -1528,7 +1592,7 @@ function GitHubWidgetBuilderContent() {
                           {GITHUB_EMOJIS.map((emoji) => (
                             <button
                               key={emoji.emoji}
-                              className={`p-2 rounded border text-xl hover:bg-gray-700 transition-colors ${
+                              className={`p-2 rounded border text-xl hover:bg-gray-700 transition-colors cursor-pointer ${
                                 selectedElement.content.emoji === emoji.emoji
                                   ? "border-blue-500 bg-blue-500/20"
                                   : "border-gray-600"
@@ -1564,12 +1628,12 @@ function GitHubWidgetBuilderContent() {
                                 })
                               }
                             >
-                              <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                              <SelectTrigger className="bg-gray-800 border-gray-600 text-white cursor-pointer">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="bg-gray-800 border-gray-600">
                                 {FONT_FAMILIES.map((font) => (
-                                  <SelectItem key={font} value={font}>
+                                  <SelectItem key={font} value={font} className="cursor-pointer">
                                     {font}
                                   </SelectItem>
                                 ))}
@@ -1612,7 +1676,7 @@ function GitHubWidgetBuilderContent() {
                                   },
                                 })
                               }
-                              className="flex-1"
+                              className="flex-1 cursor-pointer"
                             >
                               <Bold className="w-4 h-4" />
                             </Button>
@@ -1628,7 +1692,7 @@ function GitHubWidgetBuilderContent() {
                                   },
                                 })
                               }
-                              className="flex-1"
+                              className="flex-1 cursor-pointer"
                             >
                               <Italic className="w-4 h-4" />
                             </Button>
@@ -1645,7 +1709,7 @@ function GitHubWidgetBuilderContent() {
                                   },
                                 })
                               }
-                              className="flex-1"
+                              className="flex-1 cursor-pointer"
                             >
                               <Underline className="w-4 h-4" />
                             </Button>
@@ -1661,7 +1725,7 @@ function GitHubWidgetBuilderContent() {
                                   style: { ...selectedElement.style, textAlign: "left" },
                                 })
                               }
-                              className="flex-1"
+                              className="flex-1 cursor-pointer"
                             >
                               <AlignLeft className="w-4 h-4" />
                             </Button>
@@ -1674,7 +1738,7 @@ function GitHubWidgetBuilderContent() {
                                   style: { ...selectedElement.style, textAlign: "center" },
                                 })
                               }
-                              className="flex-1"
+                              className="flex-1 cursor-pointer"
                             >
                               <AlignCenter className="w-4 h-4" />
                             </Button>
@@ -1687,7 +1751,7 @@ function GitHubWidgetBuilderContent() {
                                   style: { ...selectedElement.style, textAlign: "right" },
                                 })
                               }
-                              className="flex-1"
+                              className="flex-1 cursor-pointer"
                             >
                               <AlignRight className="w-4 h-4" />
                             </Button>
@@ -1735,20 +1799,26 @@ function GitHubWidgetBuilderContent() {
                               type="color"
                               value={selectedElement.style.backgroundColor}
                               onChange={(e) =>
-                                updateElement({
-                                  ...selectedElement,
-                                  style: { ...selectedElement.style, backgroundColor: e.target.value },
-                                })
+                                updateElementWithSmartColor(
+                                  {
+                                    ...selectedElement,
+                                    style: { ...selectedElement.style, backgroundColor: e.target.value },
+                                  },
+                                  true,
+                                )
                               }
-                              className="w-12 h-8 p-1 bg-gray-800 border-gray-600"
+                              className="w-12 h-8 p-1 bg-gray-800 border-gray-600 cursor-pointer"
                             />
                             <Input
                               value={selectedElement.style.backgroundColor}
                               onChange={(e) =>
-                                updateElement({
-                                  ...selectedElement,
-                                  style: { ...selectedElement.style, backgroundColor: e.target.value },
-                                })
+                                updateElementWithSmartColor(
+                                  {
+                                    ...selectedElement,
+                                    style: { ...selectedElement.style, backgroundColor: e.target.value },
+                                  },
+                                  true,
+                                )
                               }
                               className="bg-gray-800 border-gray-600 text-white text-xs h-8"
                             />
@@ -1768,7 +1838,7 @@ function GitHubWidgetBuilderContent() {
                                     style: { ...selectedElement.style, color: e.target.value },
                                   })
                                 }
-                                className="w-12 h-8 p-1 bg-gray-800 border-gray-600"
+                                className="w-12 h-8 p-1 bg-gray-800 border-gray-600 cursor-pointer"
                               />
                               <Input
                                 value={selectedElement.style.color}
@@ -1895,7 +1965,7 @@ function GitHubWidgetBuilderContent() {
                               e.stopPropagation()
                               updateElement({ ...element, visible: !element.visible })
                             }}
-                            className="text-gray-400 hover:text-white p-1 h-6 w-6"
+                            className="text-gray-400 hover:text-white p-1 h-6 w-6 cursor-pointer"
                           >
                             {element.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                           </Button>
@@ -1906,7 +1976,7 @@ function GitHubWidgetBuilderContent() {
                               e.stopPropagation()
                               updateElement({ ...element, locked: !element.locked })
                             }}
-                            className="text-gray-400 hover:text-white p-1 h-6 w-6"
+                            className="text-gray-400 hover:text-white p-1 h-6 w-6 cursor-pointer"
                           >
                             {element.locked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
                           </Button>
