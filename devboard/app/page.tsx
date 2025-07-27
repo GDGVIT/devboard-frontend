@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import HeroSection from "@/components/Hero"
 import AuthHandler from "@/components/auth-handler"
-
+import Marketplace from "@/components/marketplace"
 // Loading component for Suspense fallback
 function PageLoading() {
   return (
@@ -22,6 +22,7 @@ export default function Home() {
         <AuthHandler />
       </Suspense>
       <HeroSection />
+      <Marketplace />
     </>
   )
 }
