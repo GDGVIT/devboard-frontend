@@ -433,19 +433,19 @@ function ProfileContent() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                {/* <div className="flex items-center gap-1 text-xs text-gray-500">
                                   <Calendar className="w-3 h-3" />
                                   <span>Created {formatDate(widget.createdAt)}</span>
-                                </div>
+                                </div> */}
                               </div>
-                              <Button
+                              {/* <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleDeleteWidget(widget._id)}
                                 className="text-gray-400 hover:text-red-400 p-1 h-8 w-8 ml-2 cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </Button>
+                              </Button> */}
                             </div>
 
                             {widget.Tags && widget.Tags.length > 0 && (
@@ -470,7 +470,7 @@ function ProfileContent() {
                               </div>
                             )}
 
-                            <div className="bg-gray-950 rounded-lg p-3 border border-gray-700">
+                            {/* <div className="bg-gray-950 rounded-lg p-3 border border-gray-700">
                               <div className="text-xs text-gray-500 mb-2 flex items-center gap-1">
                                 <Code className="w-3 h-3" />
                                 Widget Preview
@@ -490,7 +490,7 @@ function ProfileContent() {
                                   </div>
                                 </div>
                               </div>
-                            </div>
+                            </div> */}
                           </CardContent>
                         </Card>
                       ))}
