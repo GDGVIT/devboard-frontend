@@ -105,7 +105,6 @@ CMD ["yarn", "start"]
 	   </td>
    </tr>
 </table>
-			<img src = "https://dscvit.com/images/dsc-logo-square.svg" width="150" height="150" alt="Your Name Here (Insert Your Image Link In Src">
 		</p>
   
 		
