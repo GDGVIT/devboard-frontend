@@ -91,10 +91,10 @@ CMD ["yarn", "start"]
    <tr align="center">
 	   <td>
 	   Nitin Kumar Pandey
-	   <p align="center">
+<!-- 	   <p align="center">
 		   <img src = "https://media.licdn.com/dms/image/D4D03AQFQwQwQwQwQwQ/profile-displayphoto-shrink_200_200/0?e=1696464000&v=beta&t=QwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw" width="150" height="150" alt="Nitin Kumar Pandey">
-	   </p>
-		   <p align="center">
+	   </p> -->
+		<p align="center">
 			   <a href = "https://github.com/NitinTheGreat">
 				   <img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/>
 			   </a>
@@ -109,7 +109,7 @@ CMD ["yarn", "start"]
 		</p>
   
 		
-	</tr>
+	
 </table>
 
 <p align="center">
